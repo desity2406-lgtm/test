@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Тест за номофобия — интерактивен</title>
+  <style>
+    body {
+      font-family: Inter, Arial, sans-serif;
+      margin: 0;
+      background: linear-gradient(180deg, #f0f8ff, #e6f0fa);
+      color: #222;
+      padding: 28px;
+    }
+    .container {max-width: 900px; margin: 0 auto;}
+    header {display: flex; align-items: center; gap: 16px; margin-bottom: 18px;}
+    .logo {width: 56px; height: 56px; border-radius: 12px; background: linear-gradient(135deg, #38bdf8, #60a5fa); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 20px;}
+    h1 {margin: 0; font-size: 22px;}
+    p.lead {margin: 6px 0 18px; color: #555;}
+    .card {background: white; border-radius: 14px; padding: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);}
+    .question {padding: 12px; border-radius: 10px; margin-bottom: 12px; background: #f8fbff; border: 1px solid #dbeafe;}
+    .qtext {font-weight: 600; margin-bottom: 8px;}
+    .options {display: flex; flex-direction: column; gap: 6px;}
+    label.option {background: #f1f5f9; padding: 8px 10px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; transition: background 0.2s, transform 0.1s;}
+    label.option:hover {background: #e0f2fe; transform: translateY(-2px);}
+    input[type=radio] {accent-color: #38bdf8;}
+    .actions {display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap;}
+    button {background: #38bdf8; color: white; border: none; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: 0.2s;}
+    button:hover {background: #0ea5e9;}
+    .result {margin-top: 20px; padding: 16px; border-radius: 10px; background: #f0f9ff; border: 1px solid #bae6fd; text-align: center;}
+    .level-text {font-size: 32px; font-weight: 700; margin-bottom: 8px;}
+    .score-text {font-size: 18px; color: #555; margin-bottom: 8px;}
+    .level-low {color: #16a34a;}
+    .level-medium {color: #eab308;}
+    .level-high {color: #f97316;}
+    .level-veryhigh {color: #dc2626;}
+    .progress-container {background: #dbeafe; border-radius: 10px; height: 12px; margin-bottom: 16px; overflow: hidden;}
+    .progress-bar {height: 12px; background: #38bdf8; width: 0%; transition: width 0.3s;}
+    footer {margin-top: 14px; color: #666; font-size: 13px;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">NF</div>
+      <div>
+        <h1>Тест за номофобия (интерактивен)</h1>
+        <p class="lead">12 въпроса • Автоматично изчисляване на точки • Прогрес бар и цветово обозначение на нивото</p>
+      </div>
+    </header>
+
+    <div class="card" id="testCard">
+      <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+      <form id="nomoForm">
+        <div id="questions"></div>
+
+        <div class="actions">
+          <button type="button" id="calcBtn">Покажи резултат</button>
+          <button type="button" id="resetBtn" style="background:#94a3b8;">Изчисти</button>
+        </div>
+
+        <div id="result" class="result" aria-live="polite" style="display:none">
+          <div id="levelText" class="level-text">Ниво на номофобия</div>
+          <div id="scoreText" class="score-text">0 / 36 точки</div>
+          <div id="interpretation" class="score-text"></div>
+        </div>
+      </form>
+    </div>
+
+    <footer>
+      <p>Това е информативен въпросник. Ако резултатът е висок и усещаш трудности, потърси консултация с психолог.</p>
+    </footer>
+  </div>
+
+  <script>
+    const questions = [
+      'Винаги нося мобилния си телефон навсякъде, дори когато отивам в друга стая вкъщи.',
+      'Използвам смартфона си по всяко време, дори когато не трябва.',
+      'Чувствам тревога, когато нямам обхват или Wi-Fi.',
+      'Чувствам нервност, когато батерията на телефона ми е почти празна.',
+      'Изпитвам тревога, ако оставя смартфона си вкъщи.',
+      'Ужасява ме мисълта, че близките ми се опитват да се свържат с мен.',
+      'Реагирам агресивно, когато ми казват, че съм зависим/а.',
+      'Често оставам буден/а през нощта за телефона.',
+      'Използвам телефона си по време на хранене.',
+      'Проверявам телефона си по време на разговори.',
+      'Проверявам смартфона си непрекъснато за известия.',
+      'Имам проблеми с близки заради постоянната употреба на телефона.'
+    ];
+
+    const options = [
+      {label: 'Напълно съгласен', value: 3},
+      {label: 'Съгласен', value: 2},
+      {label: 'В несъгласие', value: 1},
+      {label: 'Напълно несъгласен', value: 0}
+    ];
+
+    const qContainer = document.getElementById('questions');
+
+    questions.forEach((q, i) => {
+      const qDiv = document.createElement('div');
+      qDiv.className = 'question';
+      qDiv.innerHTML = `<div class='qtext'>${i+1}. ${q}</div>`;
+
+      const optWrap = document.createElement('div');
+      optWrap.className = 'options';
+      options.forEach(opt => {
+        const label = document.createElement('label');
+        label.className = 'option';
+        label.innerHTML = `<input type='radio' name='q${i+1}' value='${opt.value}'> ${opt.label}`;
+        label.querySelector('input').addEventListener('change', updateProgress);
+        optWrap.appendChild(label);
+      });
+
+      qDiv.appendChild(optWrap);
+      qContainer.appendChild(qDiv);
+    });
+
+    function updateProgress() {
+      let answered = 0;
+      for (let i = 1; i <= questions.length; i++) {
+        const val = document.getElementById('nomoForm')[`q${i}`].value;
+        if (val) answered++;
+      }
+      const percent = Math.round((answered / questions.length) * 100);
+      document.getElementById('progressBar').style.width = percent + '%';
+    }
+
+    document.getElementById('calcBtn').addEventListener('click', () => {
+      const form = document.getElementById('nomoForm');
+      let sum = 0;
+      for (let i=1; i<=questions.length; i++) {
+        const val = form[`q${i}`].value;
+        if (val) sum += Number(val);
+      }
+
+      const levelText = document.getElementById('levelText');
+      const scoreText = document.getElementById('scoreText');
+      const interp = document.getElementById('interpretation');
+
+      if (sum <= 10) { levelText.textContent = 'Без номофобия'; levelText.className = 'level-text level-low'; }
+      else if (sum <= 20) { levelText.textContent = 'Лека номофобия'; levelText.className = 'level-text level-medium'; }
+      else if (sum <= 30) { levelText.textContent = 'Средна номофобия'; levelText.className = 'level-text level-high'; }
+      else { levelText.textContent = 'Висока номофобия'; levelText.className = 'level-text level-veryhigh'; }
+
+      scoreText.textContent = sum + ' / ' + (questions.length*3) + ' точки';
+      interp.textContent = getInterpretation(sum);
+      document.getElementById('result').style.display = 'block';
+    });
+
+    function getInterpretation(score) {
+      if (score <= 10) return 'Използваш телефона си умерено.';
+      if (score <= 20) return 'Телефонът е важна част от ежедневието ти, но можеш да се справиш без него за известно време.';
+      if (score <= 30) return 'Често изпитваш напрежение, когато не си свързан. Влияе на социалните ти отношения или съня.';
+      return 'Телефонът контролира голяма част от ежедневието ти. Помисли как можеш да ограничиш употребата му.';
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      document.getElementById('nomoForm').reset();
+      document.getElementById('result').style.display = 'none';
+      document.getElementById('progressBar').style.width = '0%';
+    });
+  </script>
+</body>
+</html>
